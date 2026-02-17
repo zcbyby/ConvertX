@@ -8,39 +8,30 @@ import { Jobs } from "../db/types";
 
 export const deleteJob = new Elysia()
   .use(userService)
-  .get(
-    "/delete/:jobId",
-    async ({ params, redirect, user }) => {
-      const job = db
-        .query("SELECT * FROM jobs WHERE user_id = ? AND id = ?")
-        .as(Jobs)
-        .get(user.id, params.jobId);
+  .get("/delete/:jobId", async ({ params, redirect }) => {
+    const job = db.query("SELECT * FROM jobs WHERE id = ?").as(Jobs).get(params.jobId);
 
-      if (!job) {
-        return redirect(`${WEBROOT}/results`, 302);
-      }
+    if (!job) {
+      return redirect(`${WEBROOT}/results`, 302);
+    }
 
-      // delete the directories
-      rmSync(`${outputDir}${job.user_id}/${job.id}`, {
-        recursive: true,
-        force: true,
-      });
-      rmSync(`${uploadsDir}${job.user_id}/${job.id}`, {
-        recursive: true,
-        force: true,
-      });
+    // delete the directories
+    rmSync(`${outputDir}${job.id}`, {
+      recursive: true,
+      force: true,
+    });
+    rmSync(`${uploadsDir}${job.id}`, {
+      recursive: true,
+      force: true,
+    });
 
-      // delete the job
-      db.query("DELETE FROM jobs WHERE id = ?").run(job.id);
-      return redirect(`${WEBROOT}/history`, 302);
-    },
-    {
-      auth: true,
-    },
-  )
+    // delete the job
+    db.query("DELETE FROM jobs WHERE id = ?").run(job.id);
+    return redirect(`${WEBROOT}/history`, 302);
+  })
   .post(
     "/delete-multiple",
-    async ({ body, user, set }) => {
+    async ({ body, set }) => {
       const { jobIds } = body;
 
       if (!Array.isArray(jobIds) || jobIds.length === 0) {
@@ -56,22 +47,19 @@ export const deleteJob = new Elysia()
       // Process deletions sequentially for safety
       for (const jobId of jobIds) {
         try {
-          const job = db
-            .query("SELECT * FROM jobs WHERE user_id = ? AND id = ?")
-            .as(Jobs)
-            .get(user.id, jobId);
+          const job = db.query("SELECT * FROM jobs WHERE id = ?").as(Jobs).get(jobId);
 
           if (!job) {
             results.failed.push({
               jobId,
-              error: "Job not found or unauthorized",
+              error: "Job not found",
             });
             continue;
           }
 
           // Delete the directories
           try {
-            rmSync(`${outputDir}${job.user_id}/${job.id}`, {
+            rmSync(`${outputDir}${job.id}`, {
               recursive: true,
               force: true,
             });
@@ -80,7 +68,7 @@ export const deleteJob = new Elysia()
           }
 
           try {
-            rmSync(`${uploadsDir}${job.user_id}/${job.id}`, {
+            rmSync(`${uploadsDir}${job.id}`, {
               recursive: true,
               force: true,
             });
@@ -107,7 +95,6 @@ export const deleteJob = new Elysia()
       };
     },
     {
-      auth: true,
       body: t.Object({
         jobIds: t.Array(t.String(), { maxItems: 100 }),
       }),

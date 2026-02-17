@@ -9,57 +9,39 @@ import { userService } from "./user";
 
 export const download = new Elysia()
   .use(userService)
-  .get(
-    "/download/:userId/:jobId/:fileName",
-    async ({ params, redirect, user }) => {
-      const userId = user.id;
-      const job = await db
-        .query("SELECT * FROM jobs WHERE user_id = ? AND id = ?")
-        .get(user.id, params.jobId);
+  .get("/download/:jobId/:fileName", async ({ params, redirect }) => {
+    const job = await db.query("SELECT * FROM jobs WHERE id = ?").get(params.jobId);
 
-      if (!job) {
-        return redirect(`${WEBROOT}/results`, 302);
-      }
-      // parse from URL encoded string
-      const jobId = decodeURIComponent(params.jobId);
-      const fileName = sanitize(decodeURIComponent(params.fileName));
+    if (!job) {
+      return redirect(`${WEBROOT}/results`, 302);
+    }
+    // parse from URL encoded string
+    const jobId = decodeURIComponent(params.jobId);
+    const fileName = sanitize(decodeURIComponent(params.fileName));
 
-      const filePath = `${outputDir}${userId}/${jobId}/${fileName}`;
-      return Bun.file(filePath);
-    },
-    {
-      auth: true,
-    },
-  )
-  .get(
-    "/archive/:jobId",
-    async ({ params, redirect, user }) => {
-      const userId = user.id;
-      const job = await db
-        .query("SELECT * FROM jobs WHERE user_id = ? AND id = ?")
-        .get(user.id, params.jobId);
+    const filePath = `${outputDir}${jobId}/${fileName}`;
+    return Bun.file(filePath);
+  })
+  .get("/archive/:jobId", async ({ params, redirect }) => {
+    const job = await db.query("SELECT * FROM jobs WHERE id = ?").get(params.jobId);
 
-      if (!job) {
-        return redirect(`${WEBROOT}/results`, 302);
-      }
+    if (!job) {
+      return redirect(`${WEBROOT}/results`, 302);
+    }
 
-      const jobId = decodeURIComponent(params.jobId);
-      const outputPath = `${outputDir}${userId}/${jobId}`;
-      const outputTar = path.join(outputPath, `converted_files_${jobId}.tar`);
+    const jobId = decodeURIComponent(params.jobId);
+    const outputPath = `${outputDir}${jobId}`;
+    const outputTar = path.join(outputPath, `converted_files_${jobId}.tar`);
 
-      await tar.create(
-        {
-          file: outputTar,
-          cwd: outputPath,
-          filter: (path) => {
-            return !path.match(".*\\.tar");
-          },
+    await tar.create(
+      {
+        file: outputTar,
+        cwd: outputPath,
+        filter: (path) => {
+          return !path.match(".*\\.tar");
         },
-        ["."],
-      );
-      return Bun.file(outputTar);
-    },
-    {
-      auth: true,
-    },
-  );
+      },
+      ["."],
+    );
+    return Bun.file(outputTar);
+  });

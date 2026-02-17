@@ -11,31 +11,19 @@ import { userService } from "./user";
 
 export const convert = new Elysia().use(userService).post(
   "/convert",
-  async ({ body, redirect, jwt, cookie: { auth, jobId } }) => {
-    if (!auth?.value) {
-      return redirect(`${WEBROOT}/login`, 302);
-    }
-
-    const user = await jwt.verify(auth.value);
-    if (!user) {
-      return redirect(`${WEBROOT}/login`, 302);
-    }
-
+  async ({ body, redirect, cookie: { jobId } }) => {
     if (!jobId?.value) {
       return redirect(`${WEBROOT}/`, 302);
     }
 
-    const existingJob = db
-      .query("SELECT * FROM jobs WHERE id = ? AND user_id = ?")
-      .as(Jobs)
-      .get(jobId.value, user.id);
+    const existingJob = db.query("SELECT * FROM jobs WHERE id = ?").as(Jobs).get(jobId.value);
 
     if (!existingJob) {
       return redirect(`${WEBROOT}/`, 302);
     }
 
-    const userUploadsDir = `${uploadsDir}${user.id}/${jobId.value}/`;
-    const userOutputDir = `${outputDir}${user.id}/${jobId.value}/`;
+    const userUploadsDir = `${uploadsDir}${jobId.value}/`;
+    const userOutputDir = `${outputDir}${jobId.value}/`;
 
     // create the output directory
     try {
@@ -89,6 +77,8 @@ export const convert = new Elysia().use(userService).post(
       convert_to: t.String(),
       file_names: t.String(),
     }),
-    auth: true,
+    cookie: t.Cookie({
+      jobId: t.Optional(t.String()),
+    }),
   },
 );

@@ -9,15 +9,8 @@ export class Filename {
 export class Jobs {
   finished_files!: number;
   id!: number;
-  user_id!: number;
   date_created!: string;
   status!: string;
   num_files!: number;
   files_detailed!: Filename[];
-}
-
-export class User {
-  id!: number;
-  email!: string;
-  password!: string;
 }

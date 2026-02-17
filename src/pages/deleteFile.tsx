@@ -9,20 +9,18 @@ import path from "node:path";
 
 export const deleteFile = new Elysia().use(userService).post(
   "/delete",
-  async ({ body, redirect, cookie: { jobId }, user }) => {
+  async ({ body, redirect, cookie: { jobId } }) => {
     if (!jobId?.value) {
       return redirect(`${WEBROOT}/`, 302);
     }
 
-    const existingJob = await db
-      .query("SELECT * FROM jobs WHERE id = ? AND user_id = ?")
-      .get(jobId.value, user.id);
+    const existingJob = await db.query("SELECT * FROM jobs WHERE id = ?").get(jobId.value);
 
     if (!existingJob) {
       return redirect(`${WEBROOT}/`, 302);
     }
 
-    const userUploadsDir = path.join(uploadsDir, user.id, jobId.value);
+    const userUploadsDir = path.join(uploadsDir, jobId.value);
 
     const sanitized = sanitize(body.filename);
     const targetPath = path.join(userUploadsDir, sanitized);
@@ -33,5 +31,10 @@ export const deleteFile = new Elysia().use(userService).post(
       message: "File deleted successfully.",
     };
   },
-  { body: t.Object({ filename: t.String() }), auth: true },
+  {
+    body: t.Object({ filename: t.String() }),
+    cookie: t.Cookie({
+      jobId: t.Optional(t.String()),
+    }),
+  },
 );

@@ -16,7 +16,6 @@ import { listConverters } from "./pages/listConverters";
 import { results } from "./pages/results";
 import { root } from "./pages/root";
 import { upload } from "./pages/upload";
-import { user } from "./pages/user";
 import { healthcheck } from "./pages/healthcheck";
 
 export const uploadsDir = "./data/uploads/";
@@ -38,7 +37,6 @@ const app = new Elysia({
       prefix: "",
     }),
   )
-  .use(user)
   .use(root)
   .use(upload)
   .use(history)
@@ -77,11 +75,11 @@ const clearJobs = () => {
 
   for (const job of jobs) {
     // delete the directories
-    rmSync(`${outputDir}${job.user_id}/${job.id}`, {
+    rmSync(`${outputDir}${job.id}`, {
       recursive: true,
       force: true,
     });
-    rmSync(`${uploadsDir}${job.user_id}/${job.id}`, {
+    rmSync(`${uploadsDir}${job.id}`, {
       recursive: true,
       force: true,
     });

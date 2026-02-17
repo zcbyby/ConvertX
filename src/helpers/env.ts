@@ -1,10 +1,4 @@
-export const ACCOUNT_REGISTRATION =
-  process.env.ACCOUNT_REGISTRATION?.toLowerCase() === "true" || false;
-
 export const HTTP_ALLOWED = process.env.HTTP_ALLOWED?.toLowerCase() === "true" || false;
-
-export const ALLOW_UNAUTHENTICATED =
-  process.env.ALLOW_UNAUTHENTICATED?.toLowerCase() === "true" || false;
 
 export const AUTO_DELETE_EVERY_N_HOURS = process.env.AUTO_DELETE_EVERY_N_HOURS
   ? Number(process.env.AUTO_DELETE_EVERY_N_HOURS)
@@ -20,8 +14,5 @@ export const MAX_CONVERT_PROCESS =
   process.env.MAX_CONVERT_PROCESS && Number(process.env.MAX_CONVERT_PROCESS) > 0
     ? Number(process.env.MAX_CONVERT_PROCESS)
     : 0;
-
-export const UNAUTHENTICATED_USER_SHARING =
-  process.env.UNAUTHENTICATED_USER_SHARING?.toLowerCase() === "true" || false;
 
 export const TIMEZONE = process.env.TZ || undefined;

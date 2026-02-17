@@ -7,20 +7,18 @@ import sanitize from "sanitize-filename";
 
 export const upload = new Elysia().use(userService).post(
   "/upload",
-  async ({ body, redirect, user, cookie: { jobId } }) => {
+  async ({ body, redirect, cookie: { jobId } }) => {
     if (!jobId?.value) {
       return redirect(`${WEBROOT}/`, 302);
     }
 
-    const existingJob = await db
-      .query("SELECT * FROM jobs WHERE id = ? AND user_id = ?")
-      .get(jobId.value, user.id);
+    const existingJob = await db.query("SELECT * FROM jobs WHERE id = ?").get(jobId.value);
 
     if (!existingJob) {
       return redirect(`${WEBROOT}/`, 302);
     }
 
-    const userUploadsDir = `${uploadsDir}${user.id}/${jobId.value}/`;
+    const userUploadsDir = `${uploadsDir}${jobId.value}/`;
 
     if (body?.file) {
       if (Array.isArray(body.file)) {
@@ -38,5 +36,10 @@ export const upload = new Elysia().use(userService).post(
       message: "Files uploaded successfully.",
     };
   },
-  { body: t.Object({ file: t.Files() }), auth: true },
+  {
+    body: t.Object({ file: t.Files() }),
+    cookie: t.Cookie({
+      jobId: t.Optional(t.String()),
+    }),
+  },
 );

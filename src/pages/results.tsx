@@ -3,7 +3,7 @@ import { BaseHtml } from "../components/base";
 import { Header } from "../components/header";
 import db from "../db/db";
 import { Filename, Jobs } from "../db/types";
-import { ALLOW_UNAUTHENTICATED, WEBROOT } from "../helpers/env";
+import { WEBROOT } from "../helpers/env";
 import { DownloadIcon } from "../icons/download";
 import { DeleteIcon } from "../icons/delete";
 import { EyeIcon } from "../icons/eye";
@@ -130,80 +130,64 @@ function ResultsArticle({
 
 export const results = new Elysia()
   .use(userService)
-  .get(
-    "/results/:jobId",
-    async ({ params, set, cookie: { job_id }, user }) => {
-      if (job_id?.value) {
-        // Clear the job_id cookie since we are viewing the results
-        job_id.remove();
-      }
+  .get("/results/:jobId", async ({ params, set, cookie: { job_id } }) => {
+    if (job_id?.value) {
+      job_id.remove();
+    }
 
-      const job = db
-        .query("SELECT * FROM jobs WHERE user_id = ? AND id = ?")
-        .as(Jobs)
-        .get(user.id, params.jobId);
+    const job = db.query("SELECT * FROM jobs WHERE id = ?").as(Jobs).get(params.jobId);
 
-      if (!job) {
-        set.status = 404;
-        return {
-          message: "Job not found.",
-        };
-      }
+    if (!job) {
+      set.status = 404;
+      return {
+        message: "Job not found.",
+      };
+    }
 
-      const outputPath = `${user.id}/${params.jobId}/`;
+    const outputPath = `${params.jobId}/`;
 
-      const files = db
-        .query("SELECT * FROM file_names WHERE job_id = ?")
-        .as(Filename)
-        .all(params.jobId);
+    const files = db
+      .query("SELECT * FROM file_names WHERE job_id = ?")
+      .as(Filename)
+      .all(params.jobId);
 
-      return (
-        <BaseHtml webroot={WEBROOT} title="ConvertX | Result">
-          <>
-            <Header webroot={WEBROOT} allowUnauthenticated={ALLOW_UNAUTHENTICATED} loggedIn />
-            <main
-              class={`
-                w-full flex-1 px-2
-                sm:px-4
-              `}
-            >
-              <ResultsArticle job={job} files={files} outputPath={outputPath} />
-            </main>
-            <script src={`${WEBROOT}/results.js`} defer />
-          </>
-        </BaseHtml>
-      );
-    },
-    { auth: true },
-  )
-  .post(
-    "/progress/:jobId",
-    async ({ set, params, cookie: { job_id }, user }) => {
-      if (job_id?.value) {
-        // Clear the job_id cookie since we are viewing the results
-        job_id.remove();
-      }
+    return (
+      <BaseHtml webroot={WEBROOT} title="ConvertX | Result">
+        <>
+          <Header webroot={WEBROOT} />
+          <main
+            class={`
+              w-full flex-1 px-2
+              sm:px-4
+            `}
+          >
+            <ResultsArticle job={job} files={files} outputPath={outputPath} />
+          </main>
+          <script src={`${WEBROOT}/results.js`} defer />
+        </>
+      </BaseHtml>
+    );
+  })
+  .post("/progress/:jobId", async ({ set, params, cookie: { job_id } }) => {
+    if (job_id?.value) {
+      job_id.remove();
+    }
 
-      const job = db
-        .query("SELECT * FROM jobs WHERE user_id = ? AND id = ?")
-        .as(Jobs)
-        .get(user.id, params.jobId);
+    const job = db.query("SELECT * FROM jobs WHERE id = ?").as(Jobs).get(params.jobId);
 
-      if (!job) {
-        set.status = 404;
-        return {
-          message: "Job not found.",
-        };
-      }
+    if (!job) {
+      set.status = 404;
+      return {
+        message: "Job not found.",
+      };
+    }
 
-      const outputPath = `${user.id}/${params.jobId}/`;
+    const outputPath = `${params.jobId}/`;
 
-      const files = db
-        .query("SELECT * FROM file_names WHERE job_id = ?")
-        .as(Filename)
-        .all(params.jobId);
+    const files = db
+      .query("SELECT * FROM file_names WHERE job_id = ?")
+      .as(Filename)
+      .all(params.jobId);
 
-      return <ResultsArticle job={job} files={files} outputPath={outputPath} />;
-    },
-    { auth: true },
-  );
+    return <ResultsArticle job={job} files={files} outputPath={outputPath} />;
+  });
