@@ -12,7 +12,7 @@
 ```yml
 services:
   convertx:
-    image: ghcr.io/zcbyby/convertx
+    image: ghcr.io/zcbyby/convertx:main
     container_name: convertx
     restart: unless-stopped
     ports:
